@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  backend-app:
+    build: ./backend
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./frontend:/app/templates
+    container_name: python_web_app
