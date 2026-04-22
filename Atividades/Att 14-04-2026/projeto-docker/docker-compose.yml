@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  backend1:
+    build: ./backend1
+    container_name: backend1
+    ports:
+      - "5001:5000"
+
+  backend2:
+    build: ./backend2
+    container_name: backend2
+    ports:
+      - "5002:5000"
+
+  backend3:
+    build: ./backend3
+    container_name: backend3
+    ports:
+      - "5003:5000"
+    environment:
+      - MODO_EXECUCAO=Produção
+
+  backend4:
+    build: ./backend4
+    container_name: backend4
+    ports:
+      - "5004:5000"
+
+  backend5:
+    build: ./backend5
+    container_name: backend5
+    ports:
+      - "5005:5000"
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+      - backend4
+      - backend5
