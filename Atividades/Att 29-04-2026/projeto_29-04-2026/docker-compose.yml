@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  alunos_api:
+    build: ./alunos_api
+    ports:
+      - "5000:5000"
+  atividades_api:
+    build: ./atividades_api
+    ports:
+      - "5001:5001"
