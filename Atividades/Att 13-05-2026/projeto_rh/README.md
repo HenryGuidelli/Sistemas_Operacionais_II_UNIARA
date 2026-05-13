@@ -1,7 +1,8 @@
 # Sistema de RH - Aplicação Distribuída com Containers
 
 **Disciplina:** Sistemas Operacionais  
-**Grupo:** Henry Guidelli - 04724-556 - Murilo Paiva Garbelini - 04724-557
+**Grupo:** * Henry Guidelli - 04724-556
+* Murilo Paiva Garbelini - 04724-557
 
 ## Sobre o Projeto
 Este projeto é uma solução computacional para um Sistema de Recursos Humanos (RH) desenvolvido como atividade prática. O ambiente simula uma arquitetura de microsserviços real, utilizando containers Docker orquestrados para demonstrar a comunicação de redes internas, persistência de dados em volumes e o consumo entre APIs RESTful independentes.

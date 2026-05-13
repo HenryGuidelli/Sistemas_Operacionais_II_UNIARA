@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 import psycopg2
 
 app = Flask(__name__)
-API_DEPARTAMENTOS_URL = os.environ.get('API_DEPARTAMENTOS_URL', 'http://localhost:5002')
+API_DEPARTAMENTOS_URL = os.environ.get('API_DEPARTAMENTOS_URL', 'http://api-departamentos:5000')
 
 def get_db_connection():
     return psycopg2.connect(
@@ -40,10 +40,13 @@ def criar_funcionario():
     novo_func = request.get_json()
     dep_id = novo_func.get('departamento_id')
     
-    # COMUNICAÇÃO: Valida se o departamento existe na outra API
-    resposta = requests.get(f"{API_DEPARTAMENTOS_URL}/departamentos/{dep_id}")
-    if resposta.status_code != 200:
-        return jsonify({'erro': 'Departamento não encontrado na API de Departamentos'}), 404
+    # Valida se o departamento existe na API de Departamentos
+    try:
+        resposta = requests.get(f"{API_DEPARTAMENTOS_URL}/departamentos/{dep_id}")
+        if resposta.status_code != 200:
+            return jsonify({'erro': 'Departamento não encontrado na API de Departamentos'}), 404
+    except Exception as e:
+        return jsonify({'erro': 'Erro de conexão com API Departamentos'}), 500
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -55,14 +58,14 @@ def criar_funcionario():
     conn.close()
     return jsonify({'id': func_id, 'mensagem': 'Funcionário criado com sucesso'}), 201
 
-# ... (Mantenha as rotas GET, PUT e DELETE iguais, apenas adicione departamento_id nos SELECTs/UPDATEs se quiser retornar)
-
 @app.route('/funcionarios', methods=['GET'])
 def listar_funcionarios():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT * FROM funcionarios;')
     funcionarios = [{'id': f[0], 'nome': f[1], 'cargo': f[2], 'departamento_id': f[3]} for f in cur.fetchall()]
+    cur.close()
+    conn.close()
     return jsonify(funcionarios)
 
 @app.route('/funcionarios/<int:id>', methods=['GET'])
@@ -71,9 +74,33 @@ def obter_funcionario(id):
     cur = conn.cursor()
     cur.execute('SELECT * FROM funcionarios WHERE id = %s;', (id,))
     func = cur.fetchone()
+    cur.close()
+    conn.close()
     if func is None:
         return jsonify({'erro': 'Não encontrado'}), 404
     return jsonify({'id': func[0], 'nome': func[1], 'cargo': func[2], 'departamento_id': func[3]})
+
+@app.route('/funcionarios/<int:id>', methods=['PUT'])
+def atualizar_funcionario(id):
+    dados = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('UPDATE funcionarios SET nome = %s, cargo = %s, departamento_id = %s WHERE id = %s;',
+                (dados['nome'], dados['cargo'], dados['departamento_id'], id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'mensagem': 'Atualizado com sucesso'})
+
+@app.route('/funcionarios/<int:id>', methods=['DELETE'])
+def remover_funcionario(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM funcionarios WHERE id = %s;', (id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'mensagem': 'Removido com sucesso'})
 
 if __name__ == '__main__':
     init_db()
