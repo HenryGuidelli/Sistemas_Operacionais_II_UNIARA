@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # --- Bancos de Dados [cite: 40] ---
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: rh_database
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - rh_network
+    ports:
+      - "5432:5432"
+
+  mongo-db:
+    image: mongo:6
+    container_name: mongo-db
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - rh_network
+    ports:
+      - "27017:27017"
+
+  # --- APIs Python [cite: 49] ---
+  api-funcionarios:
+    build: ./api-funcionarios
+    container_name: api-funcionarios
+    environment:
+      - DB_HOST=postgres-db
+      - DB_NAME=rh_database
+      - DB_USER=admin
+      - DB_PASSWORD=adminpassword
+      - API_DEPARTAMENTOS_URL=http://api-departamentos:5000
+    ports:
+      - "5001:5000"
+    depends_on:
+      - postgres-db
+      - api-departamentos
+    networks:
+      - rh_network
+
+  api-departamentos:
+    build: ./api-departamentos
+    container_name: api-departamentos
+    environment:
+      - DB_HOST=postgres-db
+      - DB_NAME=rh_database
+      - DB_USER=admin
+      - DB_PASSWORD=adminpassword
+    ports:
+      - "5002:5000"
+    depends_on:
+      - postgres-db
+    networks:
+      - rh_network
+
+  api-beneficios:
+    build: ./api-beneficios
+    container_name: api-beneficios
+    environment:
+      - MONGO_URI=mongodb://mongo-db:27017/
+      - API_FUNCIONARIOS_URL=http://api-funcionarios:5000
+    ports:
+      - "5003:5000"
+    depends_on:
+      - mongo-db
+      - api-funcionarios
+    networks:
+      - rh_network
+
+# --- Frontend Web ---
+  frontend-web:
+    build: ./frontend-web
+    container_name: frontend-web
+    ports:
+      - "8080:8080"
+    networks:
+      - rh_network
+    depends_on:
+      - api-departamentos
+      - api-funcionarios
+      - api-beneficios
+
+volumes:
+  pg_data:
+  mongo_data:
+
+networks:
+  rh_network:
+    driver: bridge
